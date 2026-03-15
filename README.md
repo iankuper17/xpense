@@ -1,36 +1,137 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Xpense — Inteligencia Financiera Personal
 
-## Getting Started
+Aplicación web de inteligencia financiera personal que conecta tu Gmail para extraer automáticamente transacciones bancarias, categorizarlas con IA (GPT-4o), detectar fraudes, suscripciones y generar presupuestos inteligentes.
 
-First, run the development server:
+## Stack Técnico
+
+- **Framework**: Next.js 14 (App Router)
+- **Lenguaje**: TypeScript (strict)
+- **Base de datos**: Supabase (Auth, Database, Vault)
+- **IA**: OpenAI GPT-4o
+- **Email**: Gmail API (OAuth 2.0)
+- **UI**: Tailwind CSS + shadcn/ui
+- **Deploy**: Vercel
+
+## Setup Local
 
 ```bash
+# 1. Instalar dependencias
+npm install
+
+# 2. Copiar variables de entorno
+cp .env.example .env.local
+
+# 3. Configurar las variables en .env.local (ver sección abajo)
+
+# 4. Ejecutar SQL en Supabase
+#    Ir a Supabase SQL Editor y ejecutar: supabase/schema.sql
+
+# 5. Iniciar servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables de Entorno
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Descripción |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL de tu proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anónima de Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave service role (solo servidor) |
+| `OPENAI_API_KEY` | API key de OpenAI |
+| `GOOGLE_CLIENT_ID` | Client ID de Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | Client Secret de Google Cloud Console |
+| `GOOGLE_REDIRECT_URI` | URI de callback para Gmail OAuth |
+| `NEXT_PUBLIC_APP_URL` | URL base de la app |
+| `VAULT_ENCRYPTION_KEY` | Clave para Supabase Vault |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estructura del Proyecto
 
-## Learn More
+```
+/app
+  /auth/login, /register, /callback    — Autenticación
+  /onboarding                           — Onboarding de 3 pasos
+  /dashboard                            — Dashboard principal
+    /transactions                       — Lista de transacciones
+    /cards                              — Gestión de tarjetas
+    /budgets                            — Presupuestos por categoría
+    /subscriptions                      — Suscripciones detectadas
+    /alerts                             — Fraude + sin clasificar
+    /chat                               — Chatbot financiero IA
+    /settings/accounts                  — Cuentas Gmail conectadas
+  /api
+    /chat                               — API del chatbot
+    /gmail/connect, /callback           — OAuth de Gmail
+    /emails/import                      — Importación de correos
+    /onboarding/complete                — Finalizar onboarding
+    /smart/run                          — Ejecutar análisis inteligente
+/actions                                — Server Actions
+/components/ui                          — Componentes shadcn/ui
+/components/dashboard                   — Componentes del dashboard
+/lib/supabase                           — Clientes de Supabase
+/lib/openai                             — Cliente y extracción IA
+/lib/gmail                              — Cliente Gmail y filtros
+/types                                  — Tipos TypeScript
+/supabase                               — SQL scripts
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Checklist de Deploy en Vercel (via GitHub)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Preparar Supabase
+- [ ] Crear proyecto en [supabase.com](https://supabase.com)
+- [ ] Ir a SQL Editor y ejecutar `supabase/schema.sql`
+- [ ] Habilitar la extensión `supabase_vault` en Database > Extensions
+- [ ] En Authentication > Providers, habilitar:
+  - Email (ya habilitado por defecto)
+  - Google OAuth (configurar Client ID y Secret)
+- [ ] En Authentication > URL Configuration:
+  - Site URL: `https://tu-dominio.vercel.app`
+  - Redirect URLs: `https://tu-dominio.vercel.app/auth/callback`
+- [ ] Copiar `Project URL`, `anon key` y `service_role key` de Settings > API
 
-## Deploy on Vercel
+### 2. Configurar Google Cloud Console
+- [ ] Crear proyecto en [console.cloud.google.com](https://console.cloud.google.com)
+- [ ] Habilitar Gmail API
+- [ ] Crear credenciales OAuth 2.0:
+  - Tipo: Web Application
+  - Authorized redirect URIs:
+    - `http://localhost:3000/api/gmail/callback` (desarrollo)
+    - `https://tu-dominio.vercel.app/api/gmail/callback` (producción)
+- [ ] Configurar pantalla de consentimiento OAuth
+- [ ] Copiar Client ID y Client Secret
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 3. Configurar OpenAI
+- [ ] Crear API key en [platform.openai.com](https://platform.openai.com)
+- [ ] Asegurarse de tener acceso a GPT-4o
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Subir a GitHub
+- [ ] `git init` (si no existe)
+- [ ] `git add .`
+- [ ] `git commit -m "Initial commit: Xpense"`
+- [ ] Crear repositorio en GitHub
+- [ ] `git remote add origin https://github.com/tu-usuario/xpense.git`
+- [ ] `git push -u origin main`
+
+### 5. Deploy en Vercel
+- [ ] Ir a [vercel.com](https://vercel.com) > Import Project
+- [ ] Seleccionar el repositorio de GitHub
+- [ ] Framework Preset: Next.js
+- [ ] Agregar todas las variables de entorno (ver `.env.example`):
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `OPENAI_API_KEY`
+  - `GOOGLE_CLIENT_ID`
+  - `GOOGLE_CLIENT_SECRET`
+  - `GOOGLE_REDIRECT_URI` = `https://tu-dominio.vercel.app/api/gmail/callback`
+  - `NEXT_PUBLIC_APP_URL` = `https://tu-dominio.vercel.app`
+  - `VAULT_ENCRYPTION_KEY` (generar con `openssl rand -hex 32`)
+- [ ] Deploy
+
+### 6. Post-Deploy
+- [ ] Actualizar `GOOGLE_REDIRECT_URI` con el dominio real de Vercel
+- [ ] Actualizar Supabase Authentication URLs con el dominio real
+- [ ] Actualizar Google Cloud Console redirect URIs
+- [ ] Verificar login con email y Google OAuth
+- [ ] Verificar conexión de Gmail y procesamiento de correos
