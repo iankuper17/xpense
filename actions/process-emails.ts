@@ -6,14 +6,6 @@ import { shouldProcessEmail, buildGmailQuery, getDateForRange } from "@/lib/gmai
 import { extractFinancialData } from "@/lib/openai/extract";
 import type { AIExtractionResult } from "@/types/database.types";
 
-async function getTokenFromVault(serviceClient: ReturnType<typeof createServiceClient>, secretId: string): Promise<string | null> {
-  const { data, error } = await serviceClient.rpc("vault.read_secret", {
-    secret_id: secretId,
-  });
-  if (error || !data) return null;
-  return data;
-}
-
 function decodeEmailBody(payload: { parts?: Array<{ mimeType: string; body?: { data?: string } }>; body?: { data?: string } }): string {
   let body = "";
 
@@ -224,13 +216,8 @@ export async function importEmails(
   let totalEmails = 0;
 
   for (const account of gmailAccounts) {
-    // Get tokens from Vault
-    const accessToken = account.access_token_secret_id
-      ? await getTokenFromVault(serviceClient, account.access_token_secret_id)
-      : null;
-    const refreshToken = account.refresh_token_secret_id
-      ? await getTokenFromVault(serviceClient, account.refresh_token_secret_id)
-      : null;
+    const accessToken = account.access_token;
+    const refreshToken = account.refresh_token;
 
     if (!accessToken || !refreshToken) continue;
 
