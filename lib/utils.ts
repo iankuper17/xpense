@@ -5,11 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = "MXN"): string {
+export function formatCurrency(amount: number, currency?: string | null): string {
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
-    currency,
-  }).format(amount);
+    currency: currency || "MXN",
+  }).format(amount || 0);
 }
 
 export function formatDate(date: string | Date): string {
