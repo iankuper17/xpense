@@ -12,12 +12,17 @@ export function formatCurrency(amount: number, currency?: string | null): string
   }).format(amount || 0);
 }
 
-export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat("es-MX", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(date));
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return "";
+  try {
+    return new Intl.DateTimeFormat("es-MX", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(new Date(date));
+  } catch {
+    return String(date);
+  }
 }
 
 export function formatTime(time: string): string {
