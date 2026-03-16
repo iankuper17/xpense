@@ -7,7 +7,6 @@
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "supabase_vault";
 
 -- ============================================================
 -- 1. USERS — User profile linked to auth.users
@@ -45,8 +44,8 @@ CREATE TABLE public.gmail_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
-  access_token_secret_id UUID, -- Reference to Supabase Vault secret
-  refresh_token_secret_id UUID, -- Reference to Supabase Vault secret
+  access_token TEXT,
+  refresh_token TEXT,
   token_expiry TIMESTAMPTZ,
   is_active BOOLEAN DEFAULT TRUE,
   last_sync_at TIMESTAMPTZ,

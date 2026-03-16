@@ -1,13 +1,13 @@
 export const dynamic = "force-dynamic";
 
-import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getTokensFromCode, getUserEmail } from "@/lib/gmail/client";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+
   try {
-    const { searchParams, origin } = new URL(request.url);
     const code = searchParams.get("code");
 
     if (!code) {
@@ -29,25 +29,14 @@ export async function GET(request: Request) {
 
     const email = await getUserEmail(tokens.access_token, tokens.refresh_token);
 
-    // Store tokens in Supabase Vault via service client
+    // Store tokens directly in gmail_accounts (encrypted columns)
     const serviceClient = createServiceClient();
 
-    const { data: accessSecret } = await serviceClient.rpc("vault.create_secret", {
-      new_secret: tokens.access_token,
-      new_name: `gmail_access_${user.id}_${email}`,
-    });
-
-    const { data: refreshSecret } = await serviceClient.rpc("vault.create_secret", {
-      new_secret: tokens.refresh_token,
-      new_name: `gmail_refresh_${user.id}_${email}`,
-    });
-
-    // Save gmail account with vault secret references
-    await supabase.from("gmail_accounts").upsert({
+    await serviceClient.from("gmail_accounts").upsert({
       user_id: user.id,
       email,
-      access_token_secret_id: accessSecret,
-      refresh_token_secret_id: refreshSecret,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
       token_expiry: tokens.expiry_date
         ? new Date(tokens.expiry_date).toISOString()
         : null,
@@ -56,10 +45,20 @@ export async function GET(request: Request) {
       onConflict: "user_id,email",
     });
 
-    return NextResponse.redirect(`${origin}/onboarding?gmail=connected`);
+    // Check if user has completed onboarding
+    const { data: profile } = await supabase
+      .from("users")
+      .select("onboarding_completed")
+      .eq("id", user.id)
+      .single();
+
+    const redirectPath = profile?.onboarding_completed
+      ? "/dashboard/settings/accounts?gmail=connected"
+      : "/onboarding?gmail=connected";
+
+    return NextResponse.redirect(`${origin}${redirectPath}`);
   } catch (error) {
     console.error("Gmail callback error:", error);
-    const { origin } = new URL(request.url);
     return NextResponse.redirect(`${origin}/onboarding?error=gmail_failed`);
   }
 }
