@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +81,7 @@ async function getDashboardData(userId: string) {
 }
 
 export default async function DashboardPage() {
+  try {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -258,4 +261,13 @@ export default async function DashboardPage() {
       </div>
     </div>
   );
+  } catch (error) {
+    console.error("Dashboard render error:", error);
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Resumen del mes</h1>
+        <p className="text-muted-foreground">Error al cargar el dashboard. Por favor recarga la página.</p>
+      </div>
+    );
+  }
 }
